@@ -39,8 +39,17 @@ ip_to_id() {
 
 ip_served() {
 	curl -f -s -H "Authorization: Bearer $API_TOKEN" "https://api.hetzner.cloud/v1/floating_ips" | \
-	jq --arg FLOATING_IP "$FLOATING_IP" --arg SERVER_ID "$SERVER_ID" 'if any(.floating_ips[]; select(.server == ($SERVER_ID|tonumber) and .ip == $FLOATING_IP)) \
-	then empty else error("Error: No matching server and IP found") end'
+	jq --arg FLOATING_IP "$FLOATING_IP" --arg SERVER_ID "$SERVER_ID" '
+	  if any(.floating_ips[]; select(.ip == $FLOATING_IP)) then
+	    if any(.floating_ips[]; select(.server == ($SERVER_ID|tonumber) and .ip == $FLOATING_IP)) then
+	      "ok"
+	    else
+	      "no"
+	    end
+	  else
+	    "not found"
+	  end
+	' -r
 }
 
 ip_validate() {
